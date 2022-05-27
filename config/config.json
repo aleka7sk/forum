@@ -1,0 +1,6 @@
+{
+    "port": "8080",
+    "hash_salt": "hash_salt",
+    "signing_key": "signing_key",
+    "token_ttl": 86400
+}
