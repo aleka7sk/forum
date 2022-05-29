@@ -2,6 +2,7 @@ package http
 
 import (
 	"forum/internal/auth"
+	"forum/models"
 	"html/template"
 	"log"
 	"net/http"
@@ -14,8 +15,14 @@ type Handler struct {
 	log     *logrus.Logger
 }
 
-type signInResponse struct {
+type SignInResponse struct {
 	Token string `json:"token"`
+}
+
+type IsAuth struct {
+	IsAuth bool
+	// Data   interface{}
+	User *models.User
 }
 
 func NewHandler(usecase auth.UseCase) *Handler {
@@ -26,22 +33,23 @@ func NewHandler(usecase auth.UseCase) *Handler {
 	}
 }
 
-func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		w.Write([]byte("404 Error"))
-		return
-	}
-	tmpl, err := template.ParseFiles("templates/index.html")
-	if err != nil {
-		log.Printf("Error parse main page index: %v", tmpl)
-	}
-	tmpl.Execute(w, nil)
+func RenderTemplate(tmpl string) []string {
+	files := []string{}
+	files = append(files, "templates/"+tmpl)
+	static_tmpl := []string{"templates/layout/layout.html"}
+	files = append(files, static_tmpl...)
+	return files
 }
 
 func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("templates/signin.html")
+	tmpl, err := template.ParseFiles(RenderTemplate("signin.html")...)
 	if err != nil {
 		log.Printf("Error parse main page signin: %v", tmpl)
+	}
+	right := r.Context().Value("rights")
+	if right == "auth" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
 	}
 	if r.Method == "GET" {
 		tmpl.Execute(w, nil)
@@ -64,17 +72,24 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		}
 		h.log.Info("Пользователь авторизован")
 		http.SetCookie(w, &http.Cookie{Name: "token", Value: token})
-		tmpl.ExecuteTemplate(w, "signin.html", signInResponse{Token: token})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		// tmpl.ExecuteTemplate(w, "signin.html", signInResponse{Token: token})
 	} else {
 		h.log.Info("Плохой запрос")
 		w.Write([]byte("Плохой запрос"))
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
 func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("templates/signup.html")
+	tmpl, err := template.ParseFiles(RenderTemplate("signup.html")...)
 	if err != nil {
 		log.Printf("Error parse main page signup: %v", tmpl)
+	}
+	right := r.Context().Value("rights")
+	if right == "auth" {
+		tmpl.Execute(w, Auth{IsAuth: true})
+		return
 	}
 	if r.Method == "GET" {
 		tmpl.Execute(w, nil)
@@ -86,31 +101,21 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			tmpl.ExecuteTemplate(w, "signup.html", "Ошибка регистрации")
 		}
-		tmpl.ExecuteTemplate(w, "signup.html", "Регистрация прошла успешно")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	} else {
 		w.Write([]byte("Плохой запрос"))
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
-func (h *Handler) Private(w http.ResponseWriter, r *http.Request) {
-	c, err := r.Cookie("token")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+type Auth struct {
+	IsAuth bool
+}
 
-	user, err := h.usecase.ParseToken(r.Context(), c.Value)
-	if user != nil {
-		log.Printf("Parse token error: %v", err)
-	}
-	tmpl, err := template.ParseFiles("templates/private.html")
+func (h *Handler) Private(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles(RenderTemplate("private.html")...)
 	if err != nil {
 		log.Printf("Parse template private error: %v", err)
 	}
-
-	tmpl.Execute(w, user)
+	tmpl.ExecuteTemplate(w, "private.html", Auth{IsAuth: true})
 }

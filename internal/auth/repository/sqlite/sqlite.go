@@ -39,7 +39,7 @@ func (r AuthRepository) CreateUser(ctx context.Context, user *models.User) error
 	sqlStatement := `insert into users (username, password) values ($1, $2)`
 	_, err = r.db.Exec(sqlStatement, model.Username, model.Password)
 	if err != nil {
-		log.Fatalf("Insert error: %v", err)
+		log.Fatalf("Insert error -> : %v", err)
 	}
 
 	return nil

@@ -1,0 +1,67 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <header class="header">
+            <div class="container">
+                <div class="header__row">
+                    <div class="header__logo">
+                        <h1><a href="/">FORUM</a></h1>
+                    </div>
+                    <div class="header__menu">
+                        <nav class="header__nav">
+                            <li>
+                                <a href="/">Все посты</a>
+                            </li>
+                           
+                            {{ if .IsAuth }}
+                            <li>
+                                <a href="/like">Лайкнутые посты</a>
+                            </li>
+                            <li>
+                                <a href="/dislike">Дизлайкнутые посты</a>
+                            </li>
+                            <li>
+                                <a href="/create-post">Создать пост</a>
+                            </li>
+                            {{ end }}
+                        </nav>
+                    </div>
+                    {{ if not .IsAuth }}
+                    <div class="header__auth">
+                        <a href="/sign-in" class="button signin" style="color: black; background: white;">Войти</a>
+                        <a href="/sign-up" class="button signup">Регистрация</a>
+                    </div>
+                    {{ else }}
+                    <div class="header__profile">
+                        <a href="/logout">Выйти</a>
+                    </div>
+                   
+                    {{ end }}
+                </div>
+            </div>
+        </header>
+        <main class="main">
+            <div class="container">
+                    {{ template "main" .}}
+            </div>
+        </main>
+        <footer class="footer"> 
+            <div class="container">
+                <h1>FOOTER</h1>
+            </div>
+        </footer>
+    </div>
+
+    <script src="static/main.js"></script>
+</body>
+</html>
+{{end}}

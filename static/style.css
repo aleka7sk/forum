@@ -13,13 +13,20 @@ html, body {
     margin: 0 auto;
 }
 
-li {
+.header__nav li {
     display: inline-block;
     margin-right: 1rem;
 }
 
 a {
     text-decoration: none;
+}
+
+li {
+    list-style-type: none;
+}
+
+.header a {
     color: white;
 }
 
@@ -45,10 +52,6 @@ a {
     color: white;
 }
 
-.signin {
-    background: white;
-    color: black;
-}
 
 h5 {
     text-align: right;
@@ -87,4 +90,11 @@ h2 {
     padding: 10px;
     border-radius: 4px;
     border: 1px solid #e06149;
+}
+
+
+
+#posts {
+    width: 800px;
+    margin: 0 auto;
 }

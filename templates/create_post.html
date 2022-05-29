@@ -1,0 +1,18 @@
+{{template "base" .}}
+               
+{{ define "main" }}
+<div class="main__row">
+    <form action="/create-post" class="main__form" method="POST">
+    <div class="main__heading">
+        <h2>Создать пост</h2>
+    </div>
+    <div class="main__content">
+        <p>Чтобы создать пост нажмите кнопку создать пост</p>
+    </div>
+        <input type="text" placeholder="Название статьи" class="email" name="title">
+        <input type="text" placeholder="Автор" class="password" name="author">
+        <input type="text" placeholder="Текст" class="password" name="content">
+        <input type="submit" value="Создать пост" class="enter">
+    </form>
+</div>
+{{ end }}

@@ -2,15 +2,13 @@ package http
 
 import (
 	"forum/internal/auth"
+	"forum/internal/middleware"
 	"net/http"
 )
 
 func RegisterHTTPEndpoints(router *http.ServeMux, auc auth.UseCase) {
-	fs := http.FileServer(http.Dir("./static"))
 	h := NewHandler(auc)
-	router.Handle("/static/", http.StripPrefix("/static/", fs))
-	router.HandleFunc("/", h.Index)
-	router.HandleFunc("/sign-up", h.SignUp)
-	router.HandleFunc("/sign-in", h.SignIn)
-	router.HandleFunc("/private-post", h.Private)
+	router.HandleFunc("/sign-up", middleware.Handle(http.HandlerFunc(h.SignUp)))
+	router.HandleFunc("/sign-in", middleware.Handle(http.HandlerFunc(h.SignIn)))
+	// router.HandleFunc("/private", middleware.Handle(http.HandlerFunc(h.Private)))
 }

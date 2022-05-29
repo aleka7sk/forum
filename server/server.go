@@ -36,17 +36,18 @@ func NewApp(config config.Config) *App {
 		log.Fatalf("Db initialization error %v", err)
 	}
 	authrepository := authrepository.NewAuthRepository(db)
-	postrepositry := postrepository.NewPostRepository(db)
+	postrepository := postrepository.NewPostRepository(db)
 
 	return &App{
 		AuthUseCase: authusecase.NewService(authrepository, config.Hash_salt, []byte(config.Signing_key), config.Token_ttl),
-		PostUseCase: postusecase.NewService(postrepositry),
+		PostUseCase: postusecase.NewService(postrepository, config.Hash_salt, []byte(config.Signing_key), config.Token_ttl),
 		Logger:      logrus.New(),
 	}
 }
 
 func (a *App) Run(config config.Config) error {
 	router := http.NewServeMux()
+
 	a.Logger.Info("Initialize router...")
 	authhttp.RegisterHTTPEndpoints(router, a.AuthUseCase)
 	posthttp.RegisterHTTPEndpoints(router, a.PostUseCase)
@@ -74,19 +75,6 @@ func (a *App) Run(config config.Config) error {
 }
 
 func initDB() (*sql.DB, error) {
-	// psqlInfo := fmt.Sprintf("host=%v port=%v user=%s "+
-	// 	"password=%s sslmode=disable",
-	// 	"localhost", "5432", "postgres", "password")
-	// db, err := sql.Open("postgres", psqlInfo)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// if err = db.Ping(); err != nil {
-	// 	return nil, err
-	// }
-
-	// return db, nil
 	db, err := sql.Open("sqlite3", "./foo.db")
 	if err != nil {
 		log.Printf("%v", err)
