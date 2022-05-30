@@ -3,5 +3,5 @@ build:
     web: Dockerfile
 run:
   web: docker run --name my-first-redis -p 6379:6379 -d redis
-  go run cmd/main.go
+
   

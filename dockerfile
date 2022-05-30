@@ -1,6 +1,6 @@
 FROM golang
 
-LABEL project="g-t"
+LABEL project="web"
 
 WORKDIR ./cmd/app 
 
