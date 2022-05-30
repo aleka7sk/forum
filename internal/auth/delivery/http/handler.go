@@ -2,6 +2,7 @@ package http
 
 import (
 	"forum/internal/auth"
+	"forum/internal/middleware"
 	"forum/models"
 	"html/template"
 	"log"
@@ -46,8 +47,9 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error parse main page signin: %v", tmpl)
 	}
-	right := r.Context().Value("rights")
-	if right == "auth" {
+	right := r.Context().Value("info")
+
+	if right.(middleware.UserInfo).Rights {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -73,7 +75,6 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		h.log.Info("Пользователь авторизован")
 		http.SetCookie(w, &http.Cookie{Name: "token", Value: token})
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-		// tmpl.ExecuteTemplate(w, "signin.html", signInResponse{Token: token})
 	} else {
 		h.log.Info("Плохой запрос")
 		w.Write([]byte("Плохой запрос"))
@@ -86,9 +87,9 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error parse main page signup: %v", tmpl)
 	}
-	right := r.Context().Value("rights")
-	if right == "auth" {
-		tmpl.Execute(w, Auth{IsAuth: true})
+	right := r.Context().Value("info")
+	if right.(middleware.UserInfo).Rights {
+		tmpl.Execute(w, IsAuth{IsAuth: true})
 		return
 	}
 	if r.Method == "GET" {
@@ -106,16 +107,4 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Плохой запрос"))
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
-}
-
-type Auth struct {
-	IsAuth bool
-}
-
-func (h *Handler) Private(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles(RenderTemplate("private.html")...)
-	if err != nil {
-		log.Printf("Parse template private error: %v", err)
-	}
-	tmpl.ExecuteTemplate(w, "private.html", Auth{IsAuth: true})
 }

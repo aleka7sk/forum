@@ -6,7 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="/static/style.css">
+   
+
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet"> 
 </head>
 <body>
     <div class="wrapper">
@@ -32,6 +35,9 @@
                             <li>
                                 <a href="/create-post">Создать пост</a>
                             </li>
+                            <li>
+                                <a href="/my-posts">Мои посты</a>
+                            </li>
                             {{ end }}
                         </nav>
                     </div>
@@ -44,7 +50,6 @@
                     <div class="header__profile">
                         <a href="/logout">Выйти</a>
                     </div>
-                   
                     {{ end }}
                 </div>
             </div>
@@ -56,12 +61,77 @@
         </main>
         <footer class="footer"> 
             <div class="container">
-                <h1>FOOTER</h1>
+                <div class="footer__row">
+                    <div class="footer__content">
+                        <div class="footer__heading">
+                            <h2>Alem School</h2>
+                            <p>Оффлайн школа обучения</p> 
+                            <p>IT профессиям</p>
+                        </div>
+                        <div class="footer__info">
+                            <!-- <div class="footer__first">
+                                <h4>Информация</h4>
+                                <p>Сертификаты</p>
+                                <p>Реклама</p>
+                            </div>
+                            <div class="footer__second">
+                                <h4></h4>
+                                <p>О нас</p>
+                                <p>Соглашение</p>
+                                <p>Карта сайта</p>
+                            </div>
+                            <div class="footer_third">
+                                <h4>Информация</h4>
+                                <p>Сертификаты</p>
+                                <p>Реклама</p>
+                            </div> -->
+                            <table>
+                                <tr>
+                                  <th>Информация</th>
+                                  <th></th>
+                                  <th>Информация</th>
+                                </tr>
+                                <tr>
+                                  <td>Сертификаты</td>
+                                  <td>О нас</td>
+                                  <td>Войти</td>
+                                </tr>
+                                <tr>
+                                  <td>Справочники</td>
+                                  <td>Соглашение</td>
+                                  <td>Регистрация</td>
+                                </tr>
+                                <tr>
+                                    <td>Реклама</td>
+                                    <td>Карта сайта</td>
+                                    <td>Обратная связь</td>
+                                  </tr>
+                              </table> 
+                        </div>
+                       
+                         
+                       
+
+                        <div class="footer__email">
+                            <input type="text" placeholder="E-mail">
+                            <input type="submit" value="Подписаться">
+                        </div>
+                    </div>
+                   
+
+                    <div class="footer__logos">
+                        <h1>VK</h1>
+                        <h1>Facebook</h1>
+                        <h1>Twitter</h1>
+                    </div>
+                </div>
+                
             </div>
         </footer>
     </div>
-
-    <script src="static/main.js"></script>
+    
+    <script src="/static/main.js"></script>
+    <script src="https://kit.fontawesome.com/56942480bb.js" crossorigin="anonymous"></script>
 </body>
 </html>
 {{end}}

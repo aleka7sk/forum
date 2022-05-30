@@ -2,10 +2,9 @@ package post
 
 import (
 	"context"
-	"fmt"
-	"forum/internal/auth"
 	"forum/internal/post"
 	"forum/models"
+	"log"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -32,13 +31,21 @@ func NewService(repository post.Repository, hashSalt string, signingKey []byte, 
 	}
 }
 
-func (h *service) CreatePost(ctx context.Context, title, author, content string) {
-	h.repository.CreatePost(ctx, title, author, content)
+func (h *service) CreatePost(ctx context.Context, title, author, content, author_id string) {
+	err := h.repository.CreatePost(ctx, title, author, content, author_id)
+	if err != nil {
+		log.Printf("Error")
+	}
 }
 
 func (h *service) GetAllPosts(ctx context.Context) []models.Post {
 	posts := h.repository.GetAllPosts(ctx)
 	return posts
+}
+
+func (h *service) GetPost(ctx context.Context, id string) models.Post {
+	post := h.repository.GetPost(ctx, id)
+	return post
 }
 
 func (h *service) GetLikedPosts(ctx context.Context) {
@@ -47,20 +54,7 @@ func (h *service) GetLikedPosts(ctx context.Context) {
 func (h *service) GetUnlikedPosts(ctx context.Context) {
 }
 
-func (h *service) ParseToken(ctx context.Context, accessToken string) (*models.User, error) {
-	token, err := jwt.ParseWithClaims(accessToken, &AuthClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-		return h.signingKey, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if claims, ok := token.Claims.(*AuthClaims); ok && token.Valid {
-		return claims.User, nil
-	}
-
-	return nil, auth.ErrInvalidAccessToken
+func (h *service) GetMyPosts(ctx context.Context, author_id string) []models.Post {
+	posts := h.repository.GetMyPosts(ctx, author_id)
+	return posts
 }

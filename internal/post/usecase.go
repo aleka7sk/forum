@@ -6,11 +6,12 @@ import (
 )
 
 type UseCase interface {
-	CreatePost(ctx context.Context, title, author, content string)
+	CreatePost(ctx context.Context, title, author, content, author_id string)
 	GetAllPosts(ctx context.Context) []models.Post
+	GetPost(ctx context.Context, id string) models.Post
 	GetLikedPosts(ctx context.Context)
 	GetUnlikedPosts(ctx context.Context)
-	ParseToken(ctx context.Context, accessToken string) (*models.User, error)
+	GetMyPosts(ctx context.Context, author_id string) []models.Post
 }
 
 // type CommentUseCase interface {

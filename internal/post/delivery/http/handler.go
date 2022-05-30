@@ -1,10 +1,14 @@
 package http
 
 import (
+	"fmt"
+	"forum/internal/middleware"
 	"forum/internal/post"
 	"forum/models"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -18,6 +22,7 @@ type IsAuth struct {
 	// Data   interface{}
 	User  *models.User
 	Posts []models.Post
+	Post  models.Post
 }
 
 func NewHandler(usecase post.UseCase) *Handler {
@@ -40,16 +45,16 @@ func (h *Handler) MainPage(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("404 Error"))
 		return
 	}
-	right := r.Context().Value("rights")
+	right := r.Context().Value("info")
 
 	tmpl, err := template.ParseFiles(RenderTemplate("index.html")...)
 	if err != nil {
-		log.Printf("Error parse main page index: %v", tmpl)
+		log.Fatalf("Error parse main page index: %v", tmpl)
 	}
 
 	posts := h.usecase.GetAllPosts(r.Context())
 	data := IsAuth{}
-	if right == "auth" {
+	if right.(middleware.UserInfo).Rights {
 		data = IsAuth{IsAuth: true, Posts: posts}
 	} else {
 		data = IsAuth{IsAuth: false, Posts: posts}
@@ -61,7 +66,7 @@ func (h *Handler) MainPage(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("token")
 	if err != nil {
-		http.Redirect(w, r, "index.html", 200)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 	c := &http.Cookie{
@@ -69,19 +74,21 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Expires: time.Unix(0, 0),
 	}
 	http.SetCookie(w, c)
-
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	right := r.Context().Value("rights")
+	right := r.Context().Value("info")
 	if r.Method == "POST" {
-		if right == "auth" {
+		if right != nil {
 			r.ParseForm()
 			title := r.Form.Get("title")
-			author := r.Form.Get("author")
+			author := right.(middleware.UserInfo).Username
 			content := r.Form.Get("content")
-			h.usecase.CreatePost(r.Context(), title, author, content)
+			author_id := right.(middleware.UserInfo).Id
+			fmt.Println(author_id)
+			h.usecase.CreatePost(r.Context(), title, author, content, strconv.Itoa(author_id))
+
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		} else {
@@ -89,7 +96,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if right == "auth" {
+	if right.(middleware.UserInfo).Rights {
 		tmpl, err := template.ParseFiles(RenderTemplate("create_post.html")...)
 		if err != nil {
 			log.Printf("Error parse main page index: %v", tmpl)
@@ -97,33 +104,39 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		tmpl.Execute(w, IsAuth{IsAuth: true})
 		return
 	}
+
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// Недоделанный ---> доделать
 func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
-	right := r.Context().Value("rights")
-	if r.Method == "POST" {
-		if right == "auth" {
-			r.ParseForm()
-			title := r.Form.Get("title")
-			author := r.Form.Get("author")
-			content := r.Form.Get("content")
-			h.usecase.CreatePost(r.Context(), title, author, content)
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		} else {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
+	right := r.Context().Value("info")
+	tmpl, err := template.ParseFiles(RenderTemplate("post.html")...)
+	if err != nil {
+		log.Fatalf("Error parse main page index: %v", tmpl)
 	}
-	if right == "auth" {
-		tmpl, err := template.ParseFiles(RenderTemplate("create_post.html")...)
-		if err != nil {
-			log.Printf("Error parse main page index: %v", tmpl)
-		}
-		tmpl.Execute(w, IsAuth{IsAuth: true})
+
+	id := strings.TrimPrefix(r.URL.Path, "/article/")
+
+	post := h.usecase.GetPost(r.Context(), id)
+	if right.(middleware.UserInfo).Rights {
+		tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post})
 		return
 	}
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: false, Post: post})
+}
+
+func (h *Handler) MyPosts(w http.ResponseWriter, r *http.Request) {
+	right := r.Context().Value("info")
+	if !right.(middleware.UserInfo).Rights {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	tmpl, err := template.ParseFiles(RenderTemplate("my-post.html")...)
+	if err != nil {
+		log.Printf("Error parse main page index: %v", tmpl)
+	}
+	fmt.Println(strconv.Itoa(right.(middleware.UserInfo).Id))
+	posts := h.usecase.GetMyPosts(r.Context(), strconv.Itoa(right.(middleware.UserInfo).Id))
+
+	tmpl.ExecuteTemplate(w, "my-post.html", IsAuth{IsAuth: true, Posts: posts})
 }

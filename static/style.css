@@ -59,6 +59,7 @@ h5 {
 
 .main {
     margin-top: 100px;
+    min-height: 800px;
 }
 .main__form {
     display: flex;
@@ -94,7 +95,45 @@ h2 {
 
 
 
-#posts {
+.posts {
     width: 800px;
     margin: 0 auto;
+}
+
+.footer {
+    background: #343434;
+    padding: 30px;
+}
+.footer__content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px;
+}
+
+.footer__heading{
+    text-align: center;
+    color: white;
+}
+
+table {
+    padding: 20px;
+}
+
+th {
+    text-align: left;
+    color: white;
+    padding: 10px;
+}
+td {
+    color: white;
+    padding: 5px 10px; 
+}
+
+.footer__logos {
+    max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    color: #e06149;
 }

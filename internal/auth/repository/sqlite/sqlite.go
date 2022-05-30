@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"forum/models"
 	"log"
+	"strconv"
 
+	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
 )
 
@@ -16,12 +18,14 @@ type User struct {
 }
 
 type AuthRepository struct {
-	db *sql.DB
+	db    *sql.DB
+	redis *redis.Client
 }
 
-func NewAuthRepository(db *sql.DB) *AuthRepository {
+func NewAuthRepository(db *sql.DB, redis *redis.Client) *AuthRepository {
 	return &AuthRepository{
-		db: db,
+		db:    db,
+		redis: redis,
 	}
 }
 
@@ -54,9 +58,15 @@ func (r AuthRepository) GetUser(ctx context.Context, username, password string) 
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	for rows.Next() {
-		return toModel(user), nil
+		model_user := models.User{}
+		if err := rows.Scan(&model_user.Id, &model_user.Username, &model_user.Password); err != nil {
+			panic(err)
+		}
+		return &model_user, nil
 	}
+
 	return nil, errors.Errorf("Not registered")
 }
 
@@ -67,10 +77,14 @@ func toSqlUser(u *models.User) *User {
 	}
 }
 
-func toModel(u *User) *models.User {
-	return &models.User{
-		Id:       u.ID,
-		Username: u.Username,
-		Password: u.Password,
-	}
+// func toModel(u *User) *models.User {
+// 	return &models.User{
+// 		Id:       u.ID,
+// 		Username: u.Username,
+// 		Password: u.Password,
+// 	}
+// }
+
+func (r AuthRepository) SaveRedis(token string, id int) {
+	r.redis.Set(strconv.Itoa(id), token, 0)
 }

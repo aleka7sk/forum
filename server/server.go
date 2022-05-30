@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"forum/config"
 	"forum/internal/auth"
 	"forum/internal/post"
@@ -12,15 +13,16 @@ import (
 	"os/signal"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/sirupsen/logrus"
-
 	authhttp "forum/internal/auth/delivery/http"
 	authrepository "forum/internal/auth/repository/sqlite"
 	authusecase "forum/internal/auth/usecase"
 	posthttp "forum/internal/post/delivery/http"
 	postrepository "forum/internal/post/repository"
 	postusecase "forum/internal/post/usecase"
+
+	"github.com/go-redis/redis"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/sirupsen/logrus"
 )
 
 type App struct {
@@ -28,29 +30,39 @@ type App struct {
 	Logger      *logrus.Logger
 	AuthUseCase auth.UseCase
 	PostUseCase post.UseCase
+	Db          *sql.DB
+	Redis       *redis.Client
 }
 
 func NewApp(config config.Config) *App {
 	db, err := initDB()
 	if err != nil {
-		log.Fatalf("Db initialization error %v", err)
+		log.Fatalf("SQL Db initialization error %v", err)
 	}
-	authrepository := authrepository.NewAuthRepository(db)
+	redis, err := initRedis()
+	if err != nil {
+		log.Fatalf("Redis Db initialization error %v", err)
+	}
+	authrepository := authrepository.NewAuthRepository(db, redis)
 	postrepository := postrepository.NewPostRepository(db)
 
 	return &App{
 		AuthUseCase: authusecase.NewService(authrepository, config.Hash_salt, []byte(config.Signing_key), config.Token_ttl),
 		PostUseCase: postusecase.NewService(postrepository, config.Hash_salt, []byte(config.Signing_key), config.Token_ttl),
 		Logger:      logrus.New(),
+		Db:          db,
+		Redis:       redis,
 	}
 }
 
 func (a *App) Run(config config.Config) error {
 	router := http.NewServeMux()
-
+	defer a.Db.Close()
+	defer a.Redis.Close()
 	a.Logger.Info("Initialize router...")
-	authhttp.RegisterHTTPEndpoints(router, a.AuthUseCase)
-	posthttp.RegisterHTTPEndpoints(router, a.PostUseCase)
+	authhttp.RegisterHTTPEndpoints(router, a.AuthUseCase, a.Redis)
+	posthttp.RegisterHTTPEndpoints(router, a.PostUseCase, a.Redis)
+
 	a.Logger.Info("Register HTTP endpoints...")
 
 	a.httpServer = &http.Server{
@@ -81,6 +93,21 @@ func initDB() (*sql.DB, error) {
 		return nil, err
 	}
 	log.Print("Initialization of db")
-
 	return db, nil
+}
+
+func initRedis() (*redis.Client, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	pong, err := client.Ping().Result()
+	if err != nil {
+		log.Printf("Redis initialization error: %v", err)
+		return nil, err
+	}
+	fmt.Println(pong)
+	return client, nil
 }

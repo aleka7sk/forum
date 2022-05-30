@@ -7,10 +7,11 @@ type User struct {
 }
 
 type Post struct {
-	Id      int
-	Title   string
-	Author  string
-	Content string
+	Id       int
+	Title    string
+	Author   string
+	Content  string
+	AuthorId string
 	// date    time.Duration // int64 time.Now().Unix
 }
 
