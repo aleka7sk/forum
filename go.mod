@@ -1,7 +1,7 @@
 module forum
 
 go 1.17
-
+// +heroku goVersion go1.17
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
