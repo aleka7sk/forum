@@ -48,7 +48,6 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error parse main page signin: %v", tmpl)
 	}
 	right := r.Context().Value("info")
-
 	if right.(middleware.UserInfo).Rights {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -59,13 +58,12 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		username := r.Form.Get("username")
 		password := r.Form.Get("password")
-
 		token, err := h.usecase.SignIn(r.Context(), username, password)
 		if err != nil {
 			if err == auth.ErrUserNotFound {
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("Неавторизован"))
+				// w.WriteHeader(http.StatusUnauthorized)
 				h.log.Info("Не авторизован")
+				http.Redirect(w, r, "/sign-in", http.StatusSeeOther)
 				return
 			}
 			w.WriteHeader(http.StatusInternalServerError)

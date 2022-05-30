@@ -9,9 +9,16 @@
     <div class="main__content">
         <p>Заполните необходимые поля для регистрации</p>
     </div>
-        <input type="text" placeholder="Email" class="email" name="username">
-        <input type="text" placeholder="Ваш пароль" class="password" name="password">
-        <input type="submit" value="Зарегистрироваться" class="enter">
+        <input type="text" placeholder="Ваш логин" class="login" name="username" id="login">
+        <input type="password" placeholder="Ваш пароль" class="password" name="password" id="password">
+        <input type="password" placeholder="Повторите пароль" class="password_check" id="password_check">
+        <input type="submit" value="Зарегистрироваться" class="enter" onclick="return ValidateForm()">
+        <div style="text-align: center">
+            <p id="validation_length" style="color:red;">Пароль должен содержать 8 символов</p>
+            <p id="validation_upper" style="color:red;">Пароль должен содержать хотя бы 1 заглавную букву</p>
+            <p id="validation_special" style="color:red;">Пароль должен содержать хотя бы 1 специальный символ</p>
+            <p id="validation_length_30" style="color:red;"></p>
+        </div>
     </form>
 </div>
 {{ end }} 
