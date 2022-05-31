@@ -2,9 +2,11 @@ package post
 
 import (
 	"context"
+	"fmt"
 	"forum/internal/post"
 	"forum/models"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -57,4 +59,28 @@ func (h *service) GetUnlikedPosts(ctx context.Context) {
 func (h *service) GetMyPosts(ctx context.Context, author_id string) []models.Post {
 	posts := h.repository.GetMyPosts(ctx, author_id)
 	return posts
+}
+
+func (h *service) CreateEmotion(ctx context.Context, post string, user_id int, like, dislike bool) error {
+	PostId, err := strconv.Atoi(post)
+	fmt.Println(like)
+	fmt.Println(dislike)
+	if err != nil {
+		return err
+	}
+	var LikeInt int
+	var DisLikeInt int
+	if like == true {
+		LikeInt = 1
+		DisLikeInt = 0
+	}
+	if dislike == true {
+		LikeInt = 0
+		DisLikeInt = 1
+	}
+	err = h.repository.CreateEmotion(ctx, PostId, user_id, LikeInt, DisLikeInt)
+	if err != nil {
+		return err
+	}
+	return nil
 }

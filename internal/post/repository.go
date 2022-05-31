@@ -12,4 +12,5 @@ type Repository interface {
 	GetLikedPosts(ctx context.Context)
 	GetUnlikedPosts(ctx context.Context)
 	GetMyPosts(ctx context.Context, author_id string) []models.Post
+	CreateEmotion(ctx context.Context, post, user_id, like, dislike int) error
 }

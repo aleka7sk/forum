@@ -17,8 +17,12 @@
             </p>
         </div>
         <div style="text-align: right">
-                <button id="like" style="padding: 10px; border: none;" onclick="Like()"> </button>
-                <button id="dislike" style="padding: 10px; border: none;" onclick="Dislike()"> </button>
+            <form method="POST" action="/article/{{ .Post.Id }}">
+                <button id="like" style="padding: 10px; border: none;" onclick="Like()" name="like" type="submit"></button>
+                <button id="dislike" style="padding: 10px; border: none;" onclick="Dislike()" name="dislike" type="submit"></button>
+                {{ .Emotion.Like }}
+                {{ .Emotion.Dislike }}
+            </form>
         </div>
         <br>
         <br>

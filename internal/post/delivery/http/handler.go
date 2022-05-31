@@ -20,9 +20,10 @@ type Handler struct {
 type IsAuth struct {
 	IsAuth bool
 	// Data   interface{}
-	User  *models.User
-	Posts []models.Post
-	Post  models.Post
+	User    *models.User
+	Posts   []models.Post
+	Post    models.Post
+	Emotion models.Emotion
 }
 
 func NewHandler(usecase post.UseCase) *Handler {
@@ -118,10 +119,32 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/article/")
 
 	post := h.usecase.GetPost(r.Context(), id)
-	if right.(middleware.UserInfo).Rights {
+
+	if r.Method == "POST" && right.(middleware.UserInfo).Rights {
+		// r.ParseForm()
+		r.ParseForm()
+		var emotion string
+		for key := range r.Form {
+			emotion = key
+		}
+		if emotion == "like" {
+			if err := h.usecase.CreateEmotion(r.Context(), id, right.(middleware.UserInfo).Id, true, false); err != nil {
+				log.Fatalf("Create emotion error: %v", err)
+			}
+			tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post, Emotion: models.Emotion{Like: 1, Dislike: 0}})
+		} else if emotion == "dislike" {
+			if err := h.usecase.CreateEmotion(r.Context(), id, right.(middleware.UserInfo).Id, false, true); err != nil {
+				log.Fatalf("Create emotion error: %v", err)
+			}
+			tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post, Emotion: models.Emotion{Like: 0, Dislike: 1}})
+		}
+
+		// json.NewDecoder(r.Body).Decode(&groups)
+	} else if r.Method == "GET" && right.(middleware.UserInfo).Rights {
 		tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post})
 		return
 	}
+
 	tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: false, Post: post})
 }
 

@@ -117,3 +117,26 @@ function Dislike(ev) {
     like.style.backgroundColor = "black"
     dislike.style.backgroundColor = "#e06149"
 }
+
+
+// $(document).ready(function () {
+//     $("form").submit(function (event) {
+//       var formData = {
+//         like: $("#like").val(),
+//         dislike: $("#dislike").val(),
+//       };
+  
+//       $.ajax({
+//         type: "POST",
+//         url: "http://localhost:8080/article/1",
+//         data: formData,
+//         dataType: "json",
+//         encode: true,
+//       }).done(function (data) {
+//         console.log(data);
+//       });
+  
+//       event.preventDefault();
+//     });
+//   });
+  

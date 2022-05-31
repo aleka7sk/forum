@@ -12,6 +12,7 @@ type UseCase interface {
 	GetLikedPosts(ctx context.Context)
 	GetUnlikedPosts(ctx context.Context)
 	GetMyPosts(ctx context.Context, author_id string) []models.Post
+	CreateEmotion(ctx context.Context, post string, user_id int, like, dislike bool) error
 }
 
 // type CommentUseCase interface {

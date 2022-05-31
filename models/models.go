@@ -26,5 +26,12 @@ type Comments struct {
 	Content string
 }
 
+type Emotion struct {
+	Like    int
+	Dislike int
+	PostId  int
+	UserId  int
+}
+
 // Overall
 // Voting kind, uid, sid
