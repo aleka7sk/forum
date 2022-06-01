@@ -2,17 +2,18 @@ package post
 
 import (
 	"context"
+	"forum/internal/postmodels"
 	"forum/models"
 )
 
 type UseCase interface {
 	CreatePost(ctx context.Context, title, author, content, author_id string)
-	GetAllPosts(ctx context.Context) []models.Post
-	GetPost(ctx context.Context, id string) models.Post
-	GetLikedPosts(ctx context.Context)
-	GetUnlikedPosts(ctx context.Context)
+	GetAllPosts(ctx context.Context) []postmodels.Post
+	GetPost(ctx context.Context, post_id, user_id int) (postmodels.Post, error)
+	GetLikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error)
+	GetUnlikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error)
 	GetMyPosts(ctx context.Context, author_id string) []models.Post
-	CreateEmotion(ctx context.Context, post string, user_id int, like, dislike bool) error
+	CreateEmotion(ctx context.Context, post_id, user_id int, like, dislike bool) error
 }
 
 // type CommentUseCase interface {
