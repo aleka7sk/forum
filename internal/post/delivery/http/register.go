@@ -17,5 +17,4 @@ func RegisterHTTPEndpoints(router *http.ServeMux, auc post.UseCase, redis *redis
 	router.HandleFunc("/create-post", middleware.Handle(http.HandlerFunc(h.Create), redis))
 	router.HandleFunc("/article/", middleware.Handle(http.HandlerFunc(h.Post), redis))
 	router.HandleFunc("/my-posts", middleware.Handle(http.HandlerFunc(h.MyPosts), redis))
-	router.HandleFunc("/my-posts", middleware.Handle(http.HandlerFunc(h.LikedPosts), redis))
 }

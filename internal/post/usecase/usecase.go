@@ -33,8 +33,8 @@ func NewService(repository post.Repository, hashSalt string, signingKey []byte, 
 	}
 }
 
-func (h *service) CreatePost(ctx context.Context, title, author, content, author_id string) {
-	err := h.repository.CreatePost(ctx, title, author, content, author_id)
+func (h *service) CreatePost(ctx context.Context, title, author, content string, category, author_id int) {
+	err := h.repository.CreatePost(ctx, title, author, content, category, author_id)
 	if err != nil {
 		log.Printf("Error")
 	}
@@ -67,18 +67,8 @@ func (h *service) GetMyPosts(ctx context.Context, author_id string) []models.Pos
 	return posts
 }
 
-func (h *service) CreateEmotion(ctx context.Context, post_id, user_id int, like, dislike bool) error {
-	var LikeInt int
-	var DisLikeInt int
-	if like {
-		LikeInt = 1
-		DisLikeInt = 0
-	}
-	if dislike {
-		LikeInt = 0
-		DisLikeInt = 1
-	}
-	err := h.repository.CreateEmotion(ctx, post_id, user_id, LikeInt, DisLikeInt)
+func (h *service) CreateVote(ctx context.Context, post_id, user_id int, condition int) error {
+	err := h.repository.CreateVote(ctx, post_id, user_id, condition)
 	if err != nil {
 		return err
 	}

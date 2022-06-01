@@ -7,13 +7,13 @@ import (
 )
 
 type UseCase interface {
-	CreatePost(ctx context.Context, title, author, content, author_id string)
+	CreatePost(ctx context.Context, title, author, content string, category, author_id int)
 	GetAllPosts(ctx context.Context) []postmodels.Post
 	GetPost(ctx context.Context, post_id, user_id int) (postmodels.Post, error)
 	GetLikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error)
 	GetUnlikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error)
 	GetMyPosts(ctx context.Context, author_id string) []models.Post
-	CreateEmotion(ctx context.Context, post_id, user_id int, like, dislike bool) error
+	CreateVote(ctx context.Context, post_id, user_id int, condition int) error
 }
 
 // type CommentUseCase interface {

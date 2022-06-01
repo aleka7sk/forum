@@ -24,8 +24,8 @@ type IsAuth struct {
 	User     *models.User
 	Posts    []postmodels.Post
 	Post     postmodels.Post
-	Emotion  models.Emotion
-	Emotions []models.Emotion
+	Emotion  models.Vote
+	Emotions []models.Vote
 }
 
 func NewHandler(usecase post.UseCase) *Handler {
@@ -88,15 +88,22 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	right := r.Context().Value("info")
+
 	if r.Method == "POST" {
 		if right != nil {
 			r.ParseForm()
+			category := r.Form.Get("category")
+			category_id, err := strconv.Atoi(category)
+			if err != nil {
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
 			title := r.Form.Get("title")
 			author := right.(middleware.UserInfo).Username
 			content := r.Form.Get("content")
 			author_id := right.(middleware.UserInfo).Id
-			fmt.Println(author_id)
-			h.usecase.CreatePost(r.Context(), title, author, content, strconv.Itoa(author_id))
+
+			h.usecase.CreatePost(r.Context(), title, author, content, category_id, author_id)
 
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
@@ -140,7 +147,7 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 			emotion = key
 		}
 		if emotion == "like" {
-			if err := h.usecase.CreateEmotion(r.Context(), id_int, user_id, true, false); err != nil {
+			if err := h.usecase.CreateVote(r.Context(), id_int, user_id, 1); err != nil {
 				log.Fatalf("Create emotion error: %v", err)
 			}
 			post, err := h.usecase.GetPost(r.Context(), id_int, user_id)
@@ -150,7 +157,7 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 			tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post})
 
 		} else if emotion == "dislike" {
-			if err := h.usecase.CreateEmotion(r.Context(), id_int, user_id, false, true); err != nil {
+			if err := h.usecase.CreateVote(r.Context(), id_int, user_id, 2); err != nil {
 				log.Fatalf("Create emotion error: %v", err)
 			}
 			post, err := h.usecase.GetPost(r.Context(), id_int, user_id)

@@ -1,28 +1,39 @@
 {{ template "base" .}}
 {{ define "main" }}
     <div class="main__row posts">
-        {{ range .Posts }}
+        {{ range $element := .Posts }}
             <div class="post__author" style="color: gray">
-                {{ .Author }}
+                {{ $element.Author }}
             </div>
             <div class="post__title">
                 <h1 style="border-bottom: 1px solid gray">
-                    {{ .Title }}
+                    {{ $element.Title }}
                 </h1>
             </div>
             <div class="post__content">
                 <p>
-                    {{ .Content }}
+                    {{ $element.Content }}
                 </p>
             </div>
             <div class="post__page" style="text-align: right">
+
                 <li>
-                    <a href="article/{{ .Id }}" style="color: #e06149">Читать статью</a>
+                    <a href="article/{{ $element.Id }}" style="color: #e06149">Читать статью</a>
+                </li>
+                    
+                <li>
+                    
+                    Лайков: {{ $element.Likes }}
+
+                </li>
+                <li>
+                    Дизлайков: {{ $element.Dislikes}}
                 </li>
             </div>
             <br>
             <br>
         {{ end }}
+       
     </div>
 {{ end }}
 

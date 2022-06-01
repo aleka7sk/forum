@@ -6,31 +6,36 @@ type User struct {
 	Password string
 }
 
-type Post struct {
-	Id       int
-	Title    string
-	Author   string
-	Content  string
-	AuthorId string
-	// date    time.Duration // int64 time.Now().Unix
-}
-
 type Category struct {
 	Id    int
 	Title string
 }
 
-type Comments struct {
+type Post struct {
+	Id         int
+	Title      string
+	Author     string
+	Content    string
+	AuthorId   int
+	CategoryId int
+	Likes      int
+	Dislikes   int
+	// date    time.Duration // int64 time.Now().Unix
+}
+
+type Comment struct {
 	Id      int
 	Author  string
 	Content string
-}
-
-type Emotion struct {
-	Like    int
-	Dislike int
 	PostId  int
 	UserId  int
+}
+
+type Vote struct {
+	Id        int
+	Condition int
+	PostId    int
+	UserId    int
 }
 
 // Overall

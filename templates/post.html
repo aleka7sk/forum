@@ -18,10 +18,8 @@
         </div>
         <div style="text-align: right">
             <form method="POST" action="/article/{{ .Post.Id }}">
-                <button id="like" style="padding: 10px; border: none;" onclick="Like()" name="like" type="submit"></button>
-                <button id="dislike" style="padding: 10px; border: none;" onclick="Dislike()" name="dislike" type="submit"></button>
-                {{ .Emotion.Like }}
-                {{ .Emotion.Dislike }}
+                <button id="like" style="padding: 10px; border: none; " onclick="Like()" name="like" type="submit"></button>{{ .Post.Likes }}
+                <button id="dislike" style="padding: 10px; border: none;" onclick="Dislike()" name="dislike" type="submit"></button>{{ .Post.Dislikes }}
             </form>
         </div>
         <br>
