@@ -18,8 +18,23 @@
         </div>
         <div style="text-align: right">
             <form method="POST" action="/article/{{ .Post.Id }}">
-                <button id="like" style="padding: 10px; border: none; " onclick="Like()" name="like" type="submit"></button>{{ .Post.Likes }}
-                <button id="dislike" style="padding: 10px; border: none;" onclick="Dislike()" name="dislike" type="submit"></button>{{ .Post.Dislikes }}
+                {{ if eq .Post.Condition 1 }}
+                <button id="like" style="padding: 10px; border: none; background-color:red;" onclick="Like()" name="like" type="submit"></button>
+                {{ .Post.Likes}}
+                <button id="dislike" style="padding: 10px; border: none;" onclick="Dislike()" name="dislike" type="submit"></button>
+                {{ .Post.Dislikes}}
+                {{ else if eq .Post.Condition 2 }}
+                <button id="like" style="padding: 10px; border: none;" onclick="Like()" name="like" type="submit"></button>
+                {{ .Post.Likes}}
+                <button id="dislike" style="padding: 10px; border: none; background-color: red;" onclick="Dislike()" name="dislike" type="submit"></button>
+                {{ .Post.Dislikes}}
+                {{ else }}
+                <button id="like" style="padding: 10px; border: none;" onclick="Like()" name="like" type="submit"></button>
+                {{ .Post.Likes}}
+                <button id="dislike" style="padding: 10px; border: none;" onclick="Dislike()" name="dislike" type="submit"></button>
+                {{ .Post.Dislikes}}
+                {{ end }}
+
             </form>
         </div>
         <br>

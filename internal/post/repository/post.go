@@ -165,7 +165,6 @@ func (pr Repo) GetLikedPosts(ctx context.Context, user_id int) ([]postmodels.Pos
 	// // }
 	// return nil, nil
 	return nil, nil
-	// return posts, nil
 }
 
 func (pr Repo) GetUnlikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error) {
@@ -174,9 +173,11 @@ func (pr Repo) GetUnlikedPosts(ctx context.Context, user_id int) ([]postmodels.P
 
 func (pr Repo) GetPost(ctx context.Context, post_id, user_id int) (postmodels.Post, error) {
 	var err error
-	post := models.Post{}
+
 	sqlQuery := `SELECT * FROM post WHERE id = $1`
-	if err = pr.db.QueryRow(sqlQuery, post_id).Scan(&post.Id, &post.Title, &post.Author, &post.Content, &post.AuthorId, &post.CategoryId, &post.Likes, &post.Dislikes); err != nil {
+	rows, err := pr.db.Query(sqlQuery, post_id)
+	post_client := countingLikesDislikes(pr.db, rows)
+	if err != nil {
 		return postmodels.Post{}, fmt.Errorf("get Post() -> Post scan error: POST_id: %d :%v", post_id, err)
 	}
 
@@ -186,10 +187,12 @@ func (pr Repo) GetPost(ctx context.Context, post_id, user_id int) (postmodels.Po
 	if err = pr.db.QueryRow(sqlQueryEmotion, user_id, post_id).Scan(&vote.Id, &vote.Condition, &vote.PostId, &vote.UserId); err != nil {
 		fmt.Printf("Get Post() -> Emotion scan error: USER_ID: %d, POST_ID: %d: %v\n", user_id, post_id, err)
 	}
+	if post_client != nil {
+		post_client[0].Condition = vote.Condition
 
-	post_client := postmodels.Post{Id: post.Id, Title: post.Title, Author: post.Author, Content: post.Content, AuthorId: post.AuthorId, Likes: post.Likes, Dislikes: post.Dislikes, Condition: vote.Condition}
-
-	return post_client, nil
+		return post_client[0], nil
+	}
+	return postmodels.Post{}, nil
 }
 
 func (pr Repo) GetMyPosts(ctx context.Context, author_id string) []models.Post {
@@ -217,11 +220,8 @@ func (pr Repo) CreateVote(ctx context.Context, post_id, user_id, condition int) 
 		PostId:    post_id,
 		UserId:    user_id,
 	}
-
 	sqlQuery := `SELECT * FROM vote WHERE user_id = $1 AND post_id = $2`
-
 	vote_two := models.Vote{}
-
 	if err := pr.db.QueryRow(sqlQuery, user_id, post_id).Scan(&vote_two.Id, &vote_two.Condition, &vote_two.PostId, &vote_two.UserId); err != nil {
 		sqlStatement := `insert into vote (condition, post_id, user_id) values ($1, $2, $3)`
 		_, err = pr.db.Exec(sqlStatement, vote.Condition, vote.PostId, vote.UserId)
@@ -236,7 +236,6 @@ func (pr Repo) CreateVote(ctx context.Context, post_id, user_id, condition int) 
 		incrementLikesDislikes(ctxt, tx, vote.Condition, post_id)
 		return nil
 	}
-
 	ctxt := context.Background()
 	tx, err := pr.db.BeginTx(ctxt, nil)
 	if err != nil {
@@ -253,21 +252,6 @@ func (pr Repo) CreateVote(ctx context.Context, post_id, user_id, condition int) 
 		if err != nil {
 			return fmt.Errorf("CreateVote() -> commit update error like: 0,dislike: 0: %v", err)
 		}
-		if condition == 1 {
-			ctxt := context.Background()
-			tx, err := pr.db.BeginTx(ctxt, nil)
-			if err != nil {
-				return err
-			}
-			incrementLikesDislikes(ctxt, tx, 3, post_id)
-		} else if condition == 2 {
-			ctxt := context.Background()
-			tx, err := pr.db.BeginTx(ctxt, nil)
-			if err != nil {
-				return err
-			}
-			incrementLikesDislikes(ctxt, tx, 4, post_id)
-		}
 		return nil
 	} else {
 		updateQuery := `UPDATE vote SET condition = $1 WHERE user_id = $2 AND post_id = $3;`
@@ -279,51 +263,6 @@ func (pr Repo) CreateVote(ctx context.Context, post_id, user_id, condition int) 
 		err = tx.Commit()
 		if err != nil {
 			return fmt.Errorf("CreateVote() -> commit update error like: 1-1,dislike: 1-1: %v", err)
-		}
-		if vote_two.Condition == 0 {
-			if condition == 1 {
-				ctxt := context.Background()
-				tx, err := pr.db.BeginTx(ctxt, nil)
-				if err != nil {
-					return err
-				}
-				incrementLikesDislikes(ctxt, tx, 1, post_id)
-			} else if condition == 2 {
-				ctxt := context.Background()
-				tx, err := pr.db.BeginTx(ctxt, nil)
-				if err != nil {
-					return err
-				}
-				incrementLikesDislikes(ctxt, tx, 2, post_id)
-			}
-		} else if vote_two.Condition == 1 {
-			ctxt := context.Background()
-			tx, err := pr.db.BeginTx(ctxt, nil)
-			if err != nil {
-				return err
-			}
-
-			incrementLikesDislikes(ctxt, tx, 4, post_id)
-			ctxt = context.Background()
-			tx, err = pr.db.BeginTx(ctxt, nil)
-			if err != nil {
-				return err
-			}
-			incrementLikesDislikes(ctxt, tx, 1, post_id)
-		} else if vote_two.Condition == 2 {
-			ctxt := context.Background()
-			tx, err := pr.db.BeginTx(ctxt, nil)
-			if err != nil {
-				return err
-			}
-
-			incrementLikesDislikes(ctxt, tx, 3, post_id)
-			ctxt = context.Background()
-			tx, err = pr.db.BeginTx(ctxt, nil)
-			if err != nil {
-				return err
-			}
-			incrementLikesDislikes(ctxt, tx, 2, post_id)
 		}
 		return nil
 	}
