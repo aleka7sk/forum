@@ -168,7 +168,7 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 
 		}
 		return
-		// json.NewDecoder(r.Body).Decode(&groups)
+
 	}
 
 	if r.Method == "GET" && right.(middleware.UserInfo).Rights {
@@ -200,7 +200,7 @@ func (h *Handler) MyPosts(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(strconv.Itoa(right.(middleware.UserInfo).Id))
 	posts := h.usecase.GetMyPosts(r.Context(), strconv.Itoa(right.(middleware.UserInfo).Id))
 	fmt.Println(posts)
-	tmpl.ExecuteTemplate(w, "my-post.html", IsAuth{IsAuth: true, Posts: nil})
+	tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Posts: nil})
 }
 
 func (h *Handler) LikedPosts(w http.ResponseWriter, r *http.Request) {
@@ -209,7 +209,7 @@ func (h *Handler) LikedPosts(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	tmpl, err := template.ParseFiles(RenderTemplate("post.html")...)
+	tmpl, err := template.ParseFiles(RenderTemplate("index.html")...)
 	if err != nil {
 		log.Printf("Error parse main page index: %v", tmpl)
 	}
@@ -218,8 +218,8 @@ func (h *Handler) LikedPosts(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Liked Posts error: %v", err)
 	}
-	fmt.Println(posts)
-	tmpl.ExecuteTemplate(w, "my-post.html", IsAuth{IsAuth: true, Posts: nil})
+
+	tmpl.ExecuteTemplate(w, "index.html", IsAuth{IsAuth: true, Posts: posts})
 }
 
 func (h *Handler) UnlikedPosts(w http.ResponseWriter, r *http.Request) {
@@ -228,15 +228,15 @@ func (h *Handler) UnlikedPosts(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	tmpl, err := template.ParseFiles(RenderTemplate("post.html")...)
+	tmpl, err := template.ParseFiles(RenderTemplate("index.html")...)
 	if err != nil {
 		log.Printf("Error parse main page index: %v", tmpl)
 	}
 
-	posts, err := h.usecase.GetUnlikedPosts(r.Context(), right.(middleware.UserInfo).Id)
+	posts, err := h.usecase.GetDislikedPosts(r.Context(), right.(middleware.UserInfo).Id)
 	if err != nil {
-		log.Printf("Unliked Posts error: %v", err)
+		log.Printf("Liked Posts error: %v", err)
 	}
-	fmt.Println(posts)
-	tmpl.ExecuteTemplate(w, "my-post.html", IsAuth{IsAuth: true, Posts: nil})
+
+	tmpl.ExecuteTemplate(w, "index.html", IsAuth{IsAuth: true, Posts: posts})
 }

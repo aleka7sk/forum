@@ -18,8 +18,6 @@ type Post struct {
 	Content    string
 	AuthorId   int
 	CategoryId int
-	Likes      int
-	Dislikes   int
 	// date    time.Duration // int64 time.Now().Unix
 }
 

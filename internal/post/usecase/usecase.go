@@ -55,11 +55,11 @@ func (h *service) GetPost(ctx context.Context, post_id, user_id int) (postmodels
 }
 
 func (h *service) GetLikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error) {
-	return nil, nil
+	return h.repository.GetLikedPosts(ctx, user_id)
 }
 
-func (h *service) GetUnlikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error) {
-	return nil, nil
+func (h *service) GetDislikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error) {
+	return h.repository.GetDislikedPosts(ctx, user_id)
 }
 
 func (h *service) GetMyPosts(ctx context.Context, author_id string) []models.Post {

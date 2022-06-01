@@ -36,8 +36,6 @@ func CreateTables(db *sql.DB) {
 		content TEXT NOT NULL,
 		author_id INTEGER NOT NULL,
 		category_id INTEGER NOT NULL,
-		likes INTEGER NOT NULL,
-		dislikes INTEGER NOT NULL,
 		FOREIGN KEY(author_id) REFERENCES users(id),
 		FOREIGN KEY(category_id) REFERENCES category(id)
 	  );`)
@@ -79,12 +77,9 @@ func (pr Repo) CreatePost(ctx context.Context, title, author, content string, ca
 		Content:    content,
 		AuthorId:   author_id,
 		CategoryId: category_id,
-		Likes:      0,
-		Dislikes:   0,
 	}
-	sqlStatement := `insert into post (title, author, content, author_id, category_id, likes, dislikes) values ($1, $2, $3, $4, $5, $6, $7)`
-	fmt.Println(1)
-	_, err := pr.db.Exec(sqlStatement, post.Title, post.Author, post.Content, post.AuthorId, post.CategoryId, post.Likes, post.Dislikes)
+	sqlStatement := `insert into post (title, author, content, author_id, category_id) values ($1, $2, $3, $4, $5)`
+	_, err := pr.db.Exec(sqlStatement, post.Title, post.Author, post.Content, post.AuthorId, post.CategoryId)
 	if err != nil {
 		log.Fatalf("Insert error -> ss: %v", err)
 	}
@@ -142,33 +137,31 @@ func (pr Repo) GetAllPosts(ctx context.Context) []postmodels.Post {
 }
 
 func (pr Repo) GetLikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error) {
-	// sqlQuery := `SELECT * FROM emotion WHERE user_id = $1 AND like = 1`
-	// rows, err := pr.db.Query(sqlQuery, user_id)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("repository GetLikedPosts() -> USER_ID: %d: %v", user_id, err)
-	// }
+	sqlQuery := `SELECT * FROM vote WHERE user_id = $1 AND condition = 1`
+	rows, err := pr.db.Query(sqlQuery, user_id)
+	if err != nil {
+		return nil, fmt.Errorf("repository GetLikedPosts() -> USER_ID: %d: %v", user_id, err)
+	}
+	posts := postchecker(pr.db, rows)
+	if err != nil {
+		return []postmodels.Post{}, fmt.Errorf("get Post() -> Post scan error: USER_id: %d :%v", user_id, err)
+	}
 
-	// posts_id := []int{}
-	// for rows.Next() {
-	// 	var post_id int
-	// 	rows.Scan(nil, nil, nil, &post_id, nil)
-	// 	posts_id = append(posts_id, post_id)
-	// }
-	// rows.Close()
-	// posts := []postmodels.Post{}
-	// sqlQueryLikedPosts := `SELECT * FROM posts WHERE id = $1`
-	// // for _, elem := range posts_id {
-	// // 	post := models.Post{}
-	// // 	if err := pr.db.QueryRow(sqlQueryLikedPosts, elem); err != nil {
-	// // 		fmt.Printf("Repository GetLikedPosts() -> Not such row with ID:%d error: %v", elem, err)
-	// // 	}
-	// // }
-	// return nil, nil
-	return nil, nil
+	return posts, nil
 }
 
-func (pr Repo) GetUnlikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error) {
-	return nil, nil
+func (pr Repo) GetDislikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error) {
+	sqlQuery := `SELECT * FROM vote WHERE user_id = $1 AND condition = 2`
+	rows, err := pr.db.Query(sqlQuery, user_id)
+	if err != nil {
+		return nil, fmt.Errorf("repository GetDislikedPosts() -> USER_ID: %d: %v", user_id, err)
+	}
+	posts := postchecker(pr.db, rows)
+	if err != nil {
+		return []postmodels.Post{}, fmt.Errorf("get Post() -> Post scan error: USER_id: %d :%v", user_id, err)
+	}
+
+	return posts, nil
 }
 
 func (pr Repo) GetPost(ctx context.Context, post_id, user_id int) (postmodels.Post, error) {
@@ -228,12 +221,7 @@ func (pr Repo) CreateVote(ctx context.Context, post_id, user_id, condition int) 
 		if err != nil {
 			return fmt.Errorf("CreateVote() -> insert into emotion error: %v", err)
 		}
-		ctxt := context.Background()
-		tx, err := pr.db.BeginTx(ctxt, nil)
-		if err != nil {
-			return err
-		}
-		incrementLikesDislikes(ctxt, tx, vote.Condition, post_id)
+
 		return nil
 	}
 	ctxt := context.Background()
@@ -268,38 +256,43 @@ func (pr Repo) CreateVote(ctx context.Context, post_id, user_id, condition int) 
 	}
 }
 
+func postchecker(db *sql.DB, rows *sql.Rows) []postmodels.Post {
+	array := make([]int, 0)
+	for rows.Next() {
+		vote := models.Vote{}
+		if err := rows.Scan(&vote.Id, &vote.Condition, &vote.PostId, &vote.UserId); err != nil {
+			fmt.Print(err)
+		}
+		array = append(array, vote.PostId)
+	}
+	posts := []postmodels.Post{}
+
+	sqlQuery := `SELECT * from post WHERE id = $1`
+	for _, id := range array {
+		post := postmodels.Post{}
+		count_likes, count_dislikes := counting(db, id)
+		if err := db.QueryRow(sqlQuery, id).Scan(&post.Id, &post.Title, &post.Author, &post.Content, &post.AuthorId, &post.Condition); err != nil {
+			log.Printf("Postchecker() error: %v", err)
+		}
+		post.Likes = count_likes
+		post.Dislikes = count_dislikes
+		posts = append(posts, post)
+
+	}
+	return posts
+}
+
 func countingLikesDislikes(db *sql.DB, rows *sql.Rows) []postmodels.Post {
 	posts_client := []postmodels.Post{}
 
 	for rows.Next() {
-		count_like := 0
-		count_dislike := 0
+
 		post := models.Post{}
 
-		if err := rows.Scan(&post.Id, &post.Title, &post.Author, &post.Content, &post.AuthorId, &post.CategoryId, &post.Likes, &post.Dislikes); err != nil {
+		if err := rows.Scan(&post.Id, &post.Title, &post.Author, &post.Content, &post.AuthorId, &post.CategoryId); err != nil {
 			return posts_client
 		}
-		sqlQueryEmotionLike := `SELECT * FROM vote WHERE post_id = $1 AND condition = 1`
-		rows2, err := db.Query(sqlQueryEmotionLike, post.Id)
-		if err != nil {
-			fmt.Printf("Not likes in post: %v", err)
-		}
-
-		defer rows2.Close()
-		for rows2.Next() {
-			count_like++
-		}
-
-		sqlQueryEmotionDislike := `SELECT * FROM vote WHERE post_id = $1 AND condition = 2`
-		rows3, err := db.Query(sqlQueryEmotionDislike, post.Id)
-		if err != nil {
-			fmt.Printf("Not dislikes in post: %v", err)
-		}
-		defer rows3.Close()
-		for rows3.Next() {
-			count_dislike++
-		}
-
+		count_like, count_dislike := counting(db, post.Id)
 		post_client := postmodels.Post{
 			Id:       post.Id,
 			Title:    post.Title,
@@ -314,6 +307,32 @@ func countingLikesDislikes(db *sql.DB, rows *sql.Rows) []postmodels.Post {
 	}
 	rows.Close()
 	return posts_client
+}
+
+func counting(db *sql.DB, post_id int) (int, int) {
+	count_like := 0
+	count_dislike := 0
+	sqlQueryEmotionLike := `SELECT * FROM vote WHERE post_id = $1 AND condition = 1`
+	rows2, err := db.Query(sqlQueryEmotionLike, post_id)
+	if err != nil {
+		fmt.Printf("Not likes in post: %v", err)
+	}
+
+	defer rows2.Close()
+	for rows2.Next() {
+		count_like++
+	}
+
+	sqlQueryEmotionDislike := `SELECT * FROM vote WHERE post_id = $1 AND condition = 2`
+	rows3, err := db.Query(sqlQueryEmotionDislike, post_id)
+	if err != nil {
+		fmt.Printf("Not dislikes in post: %v", err)
+	}
+	defer rows3.Close()
+	for rows3.Next() {
+		count_dislike++
+	}
+	return count_like, count_dislike
 }
 
 func incrementLikesDislikes(ctxt context.Context, tx *sql.Tx, condition, post_id int) error {
