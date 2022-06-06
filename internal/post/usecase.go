@@ -14,6 +14,8 @@ type UseCase interface {
 	GetDislikedPosts(ctx context.Context, user_id int) ([]postmodels.Post, error)
 	GetMyPosts(ctx context.Context, author_id string) []models.Post
 	CreateVote(ctx context.Context, post_id, user_id int, condition int) error
+	CreateComment(ctx context.Context, post_id, user_id int, content string) error
+	GetComments(ctx context.Context, post_id int) ([]models.Comment, error)
 }
 
 // type CommentUseCase interface {

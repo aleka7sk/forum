@@ -74,3 +74,11 @@ func (h *service) CreateVote(ctx context.Context, post_id, user_id int, conditio
 	}
 	return nil
 }
+
+func (h *service) CreateComment(ctx context.Context, post_id, user_id int, content string) error {
+	return h.repository.CreateComment(ctx, post_id, user_id, content)
+}
+
+func (h *service) GetComments(ctx context.Context, post_id int) ([]models.Comment, error) {
+	return h.repository.GetComments(ctx, post_id)
+}

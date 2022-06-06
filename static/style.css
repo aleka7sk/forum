@@ -61,6 +61,10 @@ h5 {
     margin-top: 100px;
     min-height: 800px;
 }
+
+.main__row {
+    padding-bottom: 5rem;
+}
 .main__form {
     display: flex;
     flex-direction: column;
@@ -110,6 +114,21 @@ input {
 .posts {
     width: 800px;
     margin: 0 auto;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.comment-author {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.comment-date {
+    font-size: 14px;
+    color: gray;
 }
 
 .footer {

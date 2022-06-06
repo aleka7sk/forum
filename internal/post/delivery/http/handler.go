@@ -24,8 +24,9 @@ type IsAuth struct {
 	User     *models.User
 	Posts    []postmodels.Post
 	Post     postmodels.Post
-	Emotion  models.Vote
-	Emotions []models.Vote
+	Vote     models.Vote
+	Votes    []models.Vote
+	Comments []models.Comment
 }
 
 func NewHandler(usecase post.UseCase) *Handler {
@@ -59,7 +60,7 @@ func (h *Handler) MainPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(posts)
 	// emotions, err := h.usecase.GetEmotions(r.Context())
 	if err != nil {
-		log.Printf("Get emotions error: %v", err)
+		log.Printf("Get votes error: %v", err)
 	}
 
 	data := IsAuth{}
@@ -137,34 +138,38 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-
+	comments, err := h.usecase.GetComments(r.Context(), id_int)
+	if err != nil {
+		log.Printf("Get comments error: %v", err)
+	}
 	if r.Method == "POST" && right.(middleware.UserInfo).Rights {
 		user_id := right.(middleware.UserInfo).Id
 		// r.ParseForm()
 		r.ParseForm()
-		var emotion string
+		var vote string
 		for key := range r.Form {
-			emotion = key
+			vote = key
 		}
-		if emotion == "like" {
-			if err := h.usecase.CreateVote(r.Context(), id_int, user_id, 1); err != nil {
-				log.Fatalf("Create emotion error: %v", err)
-			}
-			post, err := h.usecase.GetPost(r.Context(), id_int, user_id)
-			if err != nil {
-				log.Printf("Get post error: %v", err)
-			}
-			tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post})
 
-		} else if emotion == "dislike" {
-			if err := h.usecase.CreateVote(r.Context(), id_int, user_id, 2); err != nil {
-				log.Fatalf("Create emotion error: %v", err)
+		if vote == "like" {
+			if err := h.usecase.CreateVote(r.Context(), id_int, user_id, 1); err != nil {
+				log.Fatalf("Create vote error: %v", err)
 			}
 			post, err := h.usecase.GetPost(r.Context(), id_int, user_id)
 			if err != nil {
 				log.Printf("Get post error: %v", err)
 			}
-			tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post})
+			tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post, Comments: comments})
+
+		} else if vote == "dislike" {
+			if err := h.usecase.CreateVote(r.Context(), id_int, user_id, 2); err != nil {
+				log.Fatalf("Create vote error: %v", err)
+			}
+			post, err := h.usecase.GetPost(r.Context(), id_int, user_id)
+			if err != nil {
+				log.Printf("Get post error: %v", err)
+			}
+			tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post, Comments: comments})
 
 		}
 		return
@@ -177,14 +182,14 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Get post error: %v", err)
 		}
-		tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post})
+		tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post, Comments: comments})
 		return
 	}
 	post, err := h.usecase.GetPost(r.Context(), id_int, 0)
 	if err != nil {
 		log.Printf("Get post error noauth: %v", err)
 	}
-	tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: false, Post: post})
+	tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: false, Post: post, Comments: comments})
 }
 
 func (h *Handler) MyPosts(w http.ResponseWriter, r *http.Request) {
@@ -239,4 +244,30 @@ func (h *Handler) UnlikedPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl.ExecuteTemplate(w, "index.html", IsAuth{IsAuth: true, Posts: posts})
+}
+
+func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("comment create")
+	right := r.Context().Value("info")
+	tmpl, err := template.ParseFiles(RenderTemplate("post.html")...)
+	if err != nil {
+		log.Fatalf("Error parse main page index: %v", tmpl)
+	}
+
+	id := strings.TrimPrefix(r.URL.Path, "/create-comment/")
+	id_int, err := strconv.Atoi(id)
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	if r.Method == "POST" && right.(middleware.UserInfo).Rights {
+		r.ParseForm()
+		content := r.Form.Get("comment")
+		if err := h.usecase.CreateComment(r.Context(), id_int, right.(middleware.UserInfo).Id, content); err != nil {
+			log.Printf("Create comment error: %v", err)
+		}
+		http.Redirect(w, r, "/article/"+id, http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

@@ -34,10 +34,31 @@
                 <button id="dislike" style="padding: 10px; border: none;" onclick="Dislike()" name="dislike" type="submit"></button>
                 {{ .Post.Dislikes}}
                 {{ end }}
-
             </form>
         </div>
         <br>
         <br>
+        <div class="comments">
+            {{ range .Comments }}
+                <div class="comment">
+                    <div class="comment-header">
+                        <p class="comment-author">{{ .Author }}</p>
+                        <p class="comment-date">01-01-2021</p>
+                    </div>
+                    <div>
+                        <pre class="comment-content">{{ .Content }}</pre>
+                    </div>
+                </div>
+                <br>
+                <br>
+            {{ end }}
+            <form action="/create-comment/{{ .Post.Id }}" method="POST">
+                <p>Оставить комментарий</p>
+                <textarea name="comment" id="" style="width: 100%;" rows="8"></textarea>
+                <div style="text-align: right">
+                    <button class="button">Отправить</button>
+                </div>
+            </form>
+        </div>
 </div>
 {{ end }}

@@ -364,3 +364,37 @@ func incrementLikesDislikes(ctxt context.Context, tx *sql.Tx, condition, post_id
 	}
 	return nil
 }
+
+func (pr Repo) CreateComment(ctx context.Context, post_id, user_id int, content string) error {
+	var username string
+	fmt.Println(post_id)
+	fmt.Println(user_id)
+	fmt.Println(content)
+	usernameQuery := `select username from users where id = $1`
+	if err := pr.db.QueryRow(usernameQuery, user_id).Scan(&username); err != nil {
+		return err
+	}
+	sqlQuery := `insert into comment (author, content, post_id, user_id) values ($1, $2, $3, $4)`
+	_, err := pr.db.Exec(sqlQuery, username, content, post_id, user_id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pr Repo) GetComments(ctx context.Context, post_id int) ([]models.Comment, error) {
+	sqlQuery := `select * from comment where post_id = $1`
+	rows, err := pr.db.Query(sqlQuery, post_id)
+	if err != nil {
+		return []models.Comment{}, nil
+	}
+	comments := []models.Comment{}
+	for rows.Next() {
+		comment := models.Comment{}
+		if err := rows.Scan(&comment.Id, &comment.Author, &comment.Content, &comment.PostId, &comment.UserId); err != nil {
+			return []models.Comment{}, err
+		}
+		comments = append(comments, comment)
+	}
+	return comments, nil
+}
