@@ -22,8 +22,7 @@ type SignInResponse struct {
 
 type IsAuth struct {
 	IsAuth bool
-	// Data   interface{}
-	User *models.User
+	User   *models.User
 }
 
 func NewHandler(usecase auth.UseCase) *Handler {
@@ -61,7 +60,6 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		token, err := h.usecase.SignIn(r.Context(), username, password)
 		if err != nil {
 			if err == auth.ErrUserNotFound {
-				// w.WriteHeader(http.StatusUnauthorized)
 				h.log.Info("Не авторизован")
 				http.Redirect(w, r, "/sign-in", http.StatusSeeOther)
 				return

@@ -82,3 +82,11 @@ func (h *service) CreateComment(ctx context.Context, post_id, user_id int, conte
 func (h *service) GetComments(ctx context.Context, post_id int) ([]models.Comment, error) {
 	return h.repository.GetComments(ctx, post_id)
 }
+
+func (h *service) GetCategoryName(ctx context.Context) ([]models.Category, error) {
+	categories, err := h.repository.GetCategoryName(ctx)
+	if err != nil {
+		return []models.Category{}, nil
+	}
+	return categories, nil
+}

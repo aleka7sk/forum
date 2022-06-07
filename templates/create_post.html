@@ -9,7 +9,11 @@
     <div class="main__content">
         <p>Чтобы создать пост нажмите кнопку создать пост</p>
     </div>
-        <input type="text" name="category">
+    <select name="category" class="category">
+        {{ range .Categories }}
+          <option value="{{ .Id }}">{{ .Title }}</option>
+        {{ end }}
+      </select>   
         <input type="text" placeholder="Название статьи" class="login" name="title">
         <input type="text" placeholder="Текст" class="password" name="content">
         <input type="submit" value="Создать пост" class="enter">

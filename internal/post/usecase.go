@@ -16,6 +16,7 @@ type UseCase interface {
 	CreateVote(ctx context.Context, post_id, user_id int, condition int) error
 	CreateComment(ctx context.Context, post_id, user_id int, content string) error
 	GetComments(ctx context.Context, post_id int) ([]models.Comment, error)
+	GetCategoryName(ctx context.Context) ([]models.Category, error)
 }
 
 // type CommentUseCase interface {

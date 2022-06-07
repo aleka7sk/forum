@@ -21,12 +21,13 @@ type Handler struct {
 type IsAuth struct {
 	IsAuth bool
 	// Data   interface{}
-	User     *models.User
-	Posts    []postmodels.Post
-	Post     postmodels.Post
-	Vote     models.Vote
-	Votes    []models.Vote
-	Comments []models.Comment
+	User       *models.User
+	Posts      []postmodels.Post
+	Post       postmodels.Post
+	Vote       models.Vote
+	Votes      []models.Vote
+	Comments   []models.Comment
+	Categories []models.Category
 }
 
 func NewHandler(usecase post.UseCase) *Handler {
@@ -89,7 +90,10 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	right := r.Context().Value("info")
-
+	categories, err := h.usecase.GetCategoryName(r.Context())
+	if err != nil {
+		log.Printf("Get category name error: %v", err)
+	}
 	if r.Method == "POST" {
 		if right != nil {
 			r.ParseForm()
@@ -118,7 +122,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Error parse main page index: %v", tmpl)
 		}
-		tmpl.Execute(w, IsAuth{IsAuth: true})
+		tmpl.Execute(w, IsAuth{IsAuth: true, Categories: categories})
 		return
 	}
 
@@ -170,10 +174,8 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 				log.Printf("Get post error: %v", err)
 			}
 			tmpl.ExecuteTemplate(w, "post.html", IsAuth{IsAuth: true, Post: post, Comments: comments})
-
 		}
 		return
-
 	}
 
 	if r.Method == "GET" && right.(middleware.UserInfo).Rights {
